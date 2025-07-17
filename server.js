@@ -40,7 +40,8 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       stats: '/stats',
-      test: '/test'
+      test: '/test',
+      iceServers: '/ice-servers'
     },
     connectedClients: clients.size,
     activeRooms: rooms.size,
@@ -77,6 +78,42 @@ app.get('/stats', (req, res) => {
     port: process.env.PORT || 3000
   };
   res.json(stats);
+});
+
+// ICE servers configuration for WebRTC (TURN/STUN servers for Railway hosting)
+app.get('/ice-servers', (req, res) => {
+  const iceServers = [
+    // Google's public STUN servers
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    
+    // ExpressTurn TURN servers for Railway NAT traversal
+    {
+      urls: 'turn:relay1.expressturn.com:3478',
+      username: 'ef3V7P4V1KMA8PJHQ2',
+      credential: 'FKQA7J4t72SL4beb'
+    },
+    {
+      urls: 'turn:relay2.expressturn.com:3478', 
+      username: 'ef3V7P4V1KMA8PJHQ2',
+      credential: 'FKQA7J4t72SL4beb'
+    },
+    
+    // Additional public STUN servers for redundancy
+    { urls: 'stun:stun.services.mozilla.com:3478' },
+    { urls: 'stun:stun.voiparound.com:3478' },
+    { urls: 'stun:stun.voipbuster.com:3478' }
+  ];
+
+  res.json({
+    iceServers: iceServers,
+    message: 'ICE servers configuration for Railway WebRTC',
+    timestamp: new Date().toISOString(),
+    serverCount: iceServers.length,
+    turnServers: iceServers.filter(server => server.urls.includes('turn')).length,
+    stunServers: iceServers.filter(server => server.urls.includes('stun')).length
+  });
 });
 
 // Socket.IO connection handling
